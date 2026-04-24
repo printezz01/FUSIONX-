@@ -79,9 +79,9 @@ def _is_allowed_url(url: str) -> bool:
 
 def _is_allowed_github(url: str) -> bool:
     """Check if a GitHub URL is in the whitelist."""
-    normalized = url.rstrip("/").rstrip(".git")
+    normalized = url.strip().rstrip("/").removesuffix(".git").lower()
     for allowed in ALLOWED_GITHUB_REPOS:
-        if normalized.lower() == allowed.lower():
+        if normalized == allowed.rstrip("/").removesuffix(".git").lower():
             return True
     return False
 
@@ -244,7 +244,7 @@ async def scan_chain(scan_id: str):
 async def scan_chat(scan_id: str, req: ChatRequest):
     """
     RAG-powered chat about scan findings.
-    Embeds query, searches pgvector, returns top 5 relevant findings + Claude answer.
+    Uses Gemini (free) → Claude (paid) → keyword fallback.
     """
     session = get_scan_session(scan_id)
     if not session:
@@ -252,17 +252,12 @@ async def scan_chat(scan_id: str, req: ChatRequest):
 
     context = search_rag(scan_id, req.question)
 
-    # Generate answer with Claude
-    try:
-        import anthropic
-        from app.config import ANTHROPIC_API_KEY, PRIMARY_MODEL, FALLBACK_MODEL
-
-        client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-        context_text = "\n".join(
-            f"- [{c.get('severity', 'info').upper()}] {c.get('title', '')}: {c.get('description', '')}"
-            for c in context
-        )
-        prompt = f"""Based on these security findings, answer the question.
+    # Build context text for LLM
+    context_text = "\n".join(
+        f"- [{c.get('severity', 'info').upper()}] {c.get('title', '')}: {c.get('description', '')}"
+        for c in context
+    )
+    prompt = f"""Based on these security findings, answer the question.
 
 Findings:
 {context_text}
@@ -271,21 +266,69 @@ Question: {req.question}
 
 Provide a clear, actionable answer."""
 
-        try:
-            response = client.messages.create(
-                model=PRIMARY_MODEL, max_tokens=1000,
-                messages=[{"role": "user", "content": prompt}],
-            )
-        except Exception:
-            response = client.messages.create(
-                model=FALLBACK_MODEL, max_tokens=1000,
-                messages=[{"role": "user", "content": prompt}],
-            )
+    answer = ""
 
-        answer = response.content[0].text
-    except Exception as e:
-        logger.error(f"Chat failed: {e}")
-        answer = f"Found {len(context)} relevant findings. Please check the dashboard for details."
+    # Try 1: Groq (FREE, fastest)
+    from app.config import GROQ_API_KEY, GOOGLE_API_KEY, ANTHROPIC_API_KEY
+    if GROQ_API_KEY and not answer:
+        try:
+            from groq import Groq
+            from app.config import GROQ_MODEL
+            client = Groq(api_key=GROQ_API_KEY)
+            response = client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=1000,
+            )
+            answer = response.choices[0].message.content
+            logger.info("Chat answered via Groq (free)")
+        except Exception as e:
+            logger.warning(f"Groq chat failed: {e}")
+
+    # Try 2: Gemini (FREE)
+    if GOOGLE_API_KEY and not answer:
+        try:
+            import google.generativeai as genai
+            from app.config import GEMINI_MODEL
+            genai.configure(api_key=GOOGLE_API_KEY)
+            model = genai.GenerativeModel(GEMINI_MODEL)
+            response = model.generate_content(prompt)
+            answer = response.text
+            logger.info("Chat answered via Gemini (free)")
+        except Exception as e:
+            logger.warning(f"Gemini chat failed: {e}")
+
+    # Try 2: Claude (PAID)
+    if ANTHROPIC_API_KEY and not answer:
+        try:
+            import anthropic
+            from app.config import CLAUDE_PRIMARY_MODEL, CLAUDE_FALLBACK_MODEL
+            client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+            try:
+                response = client.messages.create(
+                    model=CLAUDE_PRIMARY_MODEL, max_tokens=1000,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+            except Exception:
+                response = client.messages.create(
+                    model=CLAUDE_FALLBACK_MODEL, max_tokens=1000,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+            answer = response.content[0].text
+            logger.info("Chat answered via Claude (paid)")
+        except Exception as e:
+            logger.warning(f"Claude chat failed: {e}")
+
+    # Try 3: Demo fallback (no LLM)
+    if not answer:
+        if context:
+            summary_lines = []
+            for c in context[:5]:
+                sev = c.get("severity", "info").upper()
+                summary_lines.append(f"• [{sev}] {c.get('title', 'Unknown')}: {c.get('description', '')[:120]}")
+            answer = f"Based on {len(context)} relevant findings for your query:\n\n" + "\n".join(summary_lines)
+        else:
+            answer = "No relevant findings matched your query. Try asking about specific vulnerabilities, CVEs, or security layers."
 
     return {
         "answer": answer,

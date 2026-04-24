@@ -1,7 +1,6 @@
 -- ═══════════════════════════════════════════════════
 -- Sentinel AI — Database Schema Migration
 -- Run this against your Supabase PostgreSQL instance
--- Requires: pgvector extension enabled
 -- ═══════════════════════════════════════════════════
 
 -- Enable pgvector extension
@@ -9,7 +8,6 @@ CREATE EXTENSION IF NOT EXISTS vector;
 
 -- ───────────────────────────────────────────────────
 -- Table: scan_sessions
--- Tracks each scanning session lifecycle
 -- ───────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS scan_sessions (
     id           UUID PRIMARY KEY,
@@ -23,7 +21,6 @@ CREATE TABLE IF NOT EXISTS scan_sessions (
 
 -- ───────────────────────────────────────────────────
 -- Table: findings
--- Individual vulnerability findings across all layers
 -- gives/requires are CRITICAL for attack chain building
 -- ───────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS findings (
@@ -43,7 +40,6 @@ CREATE TABLE IF NOT EXISTS findings (
 
 -- ───────────────────────────────────────────────────
 -- Table: chain_edges
--- Attack chain graph edges connecting findings
 -- ───────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS chain_edges (
     id            UUID PRIMARY KEY,
@@ -55,7 +51,6 @@ CREATE TABLE IF NOT EXISTS chain_edges (
 
 -- ───────────────────────────────────────────────────
 -- Table: risk_scores
--- Overall risk score per scan session
 -- ───────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS risk_scores (
     scan_id    UUID PRIMARY KEY REFERENCES scan_sessions(id) ON DELETE CASCADE,
@@ -65,7 +60,6 @@ CREATE TABLE IF NOT EXISTS risk_scores (
 
 -- ───────────────────────────────────────────────────
 -- Table: owasp_mappings
--- OWASP Top 10 (2021) mappings per finding
 -- ───────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS owasp_mappings (
     id             UUID PRIMARY KEY,
@@ -80,3 +74,60 @@ CREATE INDEX IF NOT EXISTS idx_findings_scan_id ON findings(scan_id);
 CREATE INDEX IF NOT EXISTS idx_findings_severity ON findings(severity);
 CREATE INDEX IF NOT EXISTS idx_chain_edges_scan_id ON chain_edges(scan_id);
 CREATE INDEX IF NOT EXISTS idx_owasp_mappings_finding_id ON owasp_mappings(finding_id);
+
+-- ───────────────────────────────────────────────────
+-- pgvector index for fast RAG similarity search
+-- ───────────────────────────────────────────────────
+CREATE INDEX IF NOT EXISTS idx_findings_embedding
+    ON findings USING ivfflat (embedding vector_cosine_ops)
+    WITH (lists = 100);
+
+-- ═══════════════════════════════════════════════════
+-- RPC Function: match_findings
+-- Called by engine.py search_rag() for RAG chat
+-- Performs cosine similarity search over embeddings
+-- ═══════════════════════════════════════════════════
+CREATE OR REPLACE FUNCTION match_findings(
+    query_embedding  VECTOR(1536),
+    match_threshold  FLOAT,
+    match_count      INT,
+    p_scan_id        UUID
+)
+RETURNS TABLE (
+    id          UUID,
+    scan_id     UUID,
+    layer       TEXT,
+    severity    TEXT,
+    title       TEXT,
+    description TEXT,
+    cve_id      TEXT,
+    gives       TEXT,
+    requires    TEXT,
+    raw_output  JSONB,
+    similarity  FLOAT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        f.id,
+        f.scan_id,
+        f.layer,
+        f.severity,
+        f.title,
+        f.description,
+        f.cve_id,
+        f.gives,
+        f.requires,
+        f.raw_output,
+        1 - (f.embedding <=> query_embedding) AS similarity
+    FROM findings f
+    WHERE
+        f.scan_id = p_scan_id
+        AND f.embedding IS NOT NULL
+        AND 1 - (f.embedding <=> query_embedding) > match_threshold
+    ORDER BY f.embedding <=> query_embedding
+    LIMIT match_count;
+END;
+$$;

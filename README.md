@@ -6,7 +6,7 @@
 
 ## 🏗️ Architecture
 
-Sentinel AI uses a **LangChain ReAct agent** powered by **Claude Sonnet** to autonomously scan targets across four layers:
+Sentinel AI uses a **LangChain ReAct agent** powered by **Groq Cloud (Llama 3.3 70B)** to autonomously scan targets across four layers:
 
 | Layer      | Tool          | What it Scans                    |
 | ---------- | ------------- | -------------------------------- |
@@ -24,7 +24,8 @@ The agent chains findings together using **NetworkX** to discover multi-step att
 - Python 3.11+
 - Docker & Docker Compose
 - Git
-- API Keys: Anthropic, Supabase, NVD (free), Voyage AI or OpenAI
+- API Keys: **Groq (free)** — get yours at [console.groq.com](https://console.groq.com)
+- Optional: Google Gemini (free), Anthropic (paid), Supabase, NVD (free), Voyage AI or OpenAI
 
 ---
 
@@ -161,6 +162,19 @@ This tool **ONLY** scans safe, local targets:
 | GET    | `/scan/{id}/chain`        | Attack chain graph       |
 | POST   | `/scan/{id}/chat`         | RAG-powered Q&A          |
 | GET    | `/scan/{id}/report`       | Download PDF report      |
+
+---
+
+## 🧠 LLM Modes
+
+| Mode | API Key | Cost | Agent |
+| ---- | ------- | ---- | ----- |
+| 🟢 Groq | `GROQ_API_KEY` | **FREE** | Llama 3.3 70B (fastest) |
+| 🟢 Gemini | `GOOGLE_API_KEY` | **FREE** | Gemini 2.0 Flash |
+| 🔵 Claude | `ANTHROPIC_API_KEY` | Paid | Claude Sonnet |
+| ⚪ Demo | None needed | Free | Scripted pipeline |
+
+Priority: **Groq → Gemini → Claude → Demo**. Just add your Groq API key to `.env` to enable AI-powered scanning!
 
 ---
 

@@ -10,7 +10,8 @@ from typing import Optional
 import networkx as nx
 
 from app.config import (
-    FIXTURES_DIR, ANTHROPIC_API_KEY, PRIMARY_MODEL, FALLBACK_MODEL,
+    FIXTURES_DIR, GROQ_API_KEY, GOOGLE_API_KEY, ANTHROPIC_API_KEY,
+    GROQ_MODEL, GEMINI_MODEL, CLAUDE_PRIMARY_MODEL, CLAUDE_FALLBACK_MODEL,
     VOYAGE_API_KEY, OPENAI_API_KEY,
 )
 from app.db import (
@@ -318,17 +319,13 @@ def search_rag(scan_id: str, query: str) -> list[dict]:
 # ══════════════════════════════════════════════════════════════
 
 def generate_remediation(cve_list: list[str], findings: list[dict] = None) -> str:
-    """Call Claude to generate prioritized remediation steps."""
-    try:
-        import anthropic
-        client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+    """Generate prioritized remediation steps. Uses Gemini (free) → Claude (paid) → default."""
+    findings_context = ""
+    if findings:
+        for f in findings[:10]:
+            findings_context += f"- [{f.get('severity', 'info').upper()}] {f.get('title', '')}: {f.get('description', '')}\n"
 
-        findings_context = ""
-        if findings:
-            for f in findings[:10]:
-                findings_context += f"- [{f.get('severity', 'info').upper()}] {f.get('title', '')}: {f.get('description', '')}\n"
-
-        prompt = f"""You are a cybersecurity expert. Based on the following vulnerability findings and CVEs,
+    prompt = f"""You are a cybersecurity expert. Based on the following vulnerability findings and CVEs,
 provide prioritized, plain-English remediation steps. Be specific and actionable.
 
 CVEs: {', '.join(cve_list) if cve_list else 'None identified'}
@@ -342,28 +339,59 @@ Provide remediation in this format:
 3. [MEDIUM] ... (planned fix)
 etc.
 """
-        try:
-            response = client.messages.create(
-                model=PRIMARY_MODEL,
-                max_tokens=1500,
-                messages=[{"role": "user", "content": prompt}],
-            )
-        except Exception:
-            response = client.messages.create(
-                model=FALLBACK_MODEL,
-                max_tokens=1500,
-                messages=[{"role": "user", "content": prompt}],
-            )
 
-        return response.content[0].text
-    except Exception as e:
-        logger.warning(f"Remediation generation failed ({e}), returning default")
-        return (
-            "1. [CRITICAL] Patch all identified CVEs immediately\n"
-            "2. [CRITICAL] Remove hardcoded credentials from source code\n"
-            "3. [HIGH] Implement network segmentation and firewall rules\n"
-            "4. [HIGH] Enable parameterized queries to prevent SQL injection\n"
-            "5. [MEDIUM] Add security headers (X-Frame-Options, CSP, etc.)\n"
-            "6. [MEDIUM] Disable directory listing on web servers\n"
-            "7. [LOW] Update all services to latest stable versions\n"
-        )
+    # Try 1: Groq (FREE, fastest)
+    if GROQ_API_KEY:
+        try:
+            from groq import Groq
+            client = Groq(api_key=GROQ_API_KEY)
+            response = client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=1500,
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            logger.warning(f"Groq remediation failed: {e}")
+
+    # Try 2: Gemini (FREE)
+    if GOOGLE_API_KEY:
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=GOOGLE_API_KEY)
+            model = genai.GenerativeModel(GEMINI_MODEL)
+            response = model.generate_content(prompt)
+            return response.text
+        except Exception as e:
+            logger.warning(f"Gemini remediation failed: {e}")
+
+    # Try 2: Claude (PAID)
+    if ANTHROPIC_API_KEY:
+        try:
+            import anthropic
+            client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+            try:
+                response = client.messages.create(
+                    model=CLAUDE_PRIMARY_MODEL, max_tokens=1500,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+            except Exception:
+                response = client.messages.create(
+                    model=CLAUDE_FALLBACK_MODEL, max_tokens=1500,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+            return response.content[0].text
+        except Exception as e:
+            logger.warning(f"Claude remediation failed: {e}")
+
+    # Fallback: static default
+    logger.info("Using default remediation (no LLM available)")
+    return (
+        "1. [CRITICAL] Patch all identified CVEs immediately\n"
+        "2. [CRITICAL] Remove hardcoded credentials from source code\n"
+        "3. [HIGH] Implement network segmentation and firewall rules\n"
+        "4. [HIGH] Enable parameterized queries to prevent SQL injection\n"
+        "5. [MEDIUM] Add security headers (X-Frame-Options, CSP, etc.)\n"
+        "6. [MEDIUM] Disable directory listing on web servers\n"
+        "7. [LOW] Update all services to latest stable versions\n"
+    )

@@ -11,6 +11,8 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
 
 # ─── API Keys ────────────────────────────────────────────────
+GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
+GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
 ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
 VOYAGE_API_KEY: str = os.getenv("VOYAGE_API_KEY", "")
 OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
@@ -21,8 +23,10 @@ SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
 SUPABASE_SERVICE_KEY: str = os.getenv("SUPABASE_SERVICE_KEY", "")
 
 # ─── LLM Models ──────────────────────────────────────────────
-PRIMARY_MODEL: str = "claude-sonnet-4-5"
-FALLBACK_MODEL: str = "claude-3-5-sonnet-latest"
+GROQ_MODEL: str = "llama-3.3-70b-versatile"    # FREE via Groq
+GEMINI_MODEL: str = "gemini-2.0-flash"          # FREE via Google
+CLAUDE_PRIMARY_MODEL: str = "claude-sonnet-4-5"  # Paid
+CLAUDE_FALLBACK_MODEL: str = "claude-3-5-sonnet-latest"  # Paid fallback
 
 # ─── Embedding Config ────────────────────────────────────────
 EMBEDDING_DIM: int = 1536  # dimension for pgvector column
