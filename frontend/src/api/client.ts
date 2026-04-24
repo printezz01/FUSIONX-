@@ -15,6 +15,23 @@ import {
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 
+/**
+ * Fix garbled UTF-8 em-dashes / smart quotes that appear as "â€"" etc.
+ * This happens when Python's UTF-8 em-dash (3 bytes: 0xE2 0x80 0x94)
+ * gets misinterpreted as Windows-1252 on the JS side.
+ */
+function fixEncoding(text: string): string {
+  return text
+    .replace(/â€"/g, '—')
+    .replace(/â€"/g, '—')
+    .replace(/â€™/g, "'")
+    .replace(/â€˜/g, "'")
+    .replace(/â€œ/g, '"')
+    .replace(/â€\u009d/g, '"')
+    .replace(/â€¢/g, '•')
+    .replace(/â€"/g, '–');
+}
+
 async function apiFetch<T>(
   path: string,
   options?: RequestInit,
@@ -37,7 +54,10 @@ async function apiFetch<T>(
       throw new Error(body.detail || `HTTP ${res.status}`);
     }
 
-    return await res.json() as T;
+    // Read as text first, fix any garbled encoding, then parse
+    const rawText = await res.text();
+    const cleanText = fixEncoding(rawText);
+    return JSON.parse(cleanText) as T;
   } finally {
     clearTimeout(timeout);
   }

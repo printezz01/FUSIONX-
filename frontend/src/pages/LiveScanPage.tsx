@@ -31,6 +31,8 @@ const TOOL_DESCRIPTIONS: Record<string, string> = {
   embedding: 'Generating semantic embeddings',
 };
 
+
+
 export default function LiveScanPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
