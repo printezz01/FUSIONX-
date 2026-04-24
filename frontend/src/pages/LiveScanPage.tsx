@@ -37,7 +37,9 @@ export default function LiveScanPage() {
   const logRef = useRef<HTMLDivElement>(null);
   const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
   const [logEntries, setLogEntries] = useState<Finding[]>([]);
-  const startTime = useRef(Date.now());
+  // ── Reliable 1-second timer ──────────────────────
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { data: status } = useQuery({
     queryKey: ['scanStatus', id],
@@ -50,6 +52,27 @@ export default function LiveScanPage() {
     retry: 1,
     enabled: !!id,
   });
+
+  // Start the timer on mount, stop when scan ends
+  useEffect(() => {
+    timerRef.current = setInterval(() => {
+      setElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  // Stop the timer when scan completes or fails
+  useEffect(() => {
+    if (status?.status === 'completed' || status?.status === 'failed') {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+  }, [status?.status]);
 
   // Track new findings
   useEffect(() => {
@@ -81,9 +104,8 @@ export default function LiveScanPage() {
     }
   }, [status?.status]);
 
-  const elapsed = status?.elapsed_seconds ?? Math.floor((Date.now() - startTime.current) / 1000);
-  const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
-  const seconds = (elapsed % 60).toString().padStart(2, '0');
+  const minutes = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0');
+  const seconds = (elapsedSeconds % 60).toString().padStart(2, '0');
   const isComplete = status?.status === 'completed';
   const isFailed = status?.status === 'failed';
 
