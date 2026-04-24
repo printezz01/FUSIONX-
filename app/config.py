@@ -61,6 +61,9 @@ ALLOWED_GITHUB_REPOS: list[str] = [
     "https://github.com/OWASP/NodeGoat",
     "https://github.com/OWASP/PyGoat",
     "https://github.com/OWASP/railsgoat",
+    # Your own repos
+    "https://github.com/printezz01/FUSIONX-",
+    "https://github.com/printezz01/PrintMacha",
 ]
 
 # ─── CORS Origins ────────────────────────────────────────────
