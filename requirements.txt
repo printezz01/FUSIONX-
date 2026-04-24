@@ -1,0 +1,43 @@
+# ═══════════════════════════════════════════════════
+# Sentinel AI — Pinned Dependencies
+# ═══════════════════════════════════════════════════
+
+# Web framework
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# LangChain agent
+langchain==0.3.14
+langchain-anthropic==0.3.4
+langchain-core==0.3.29
+langchain-community==0.3.14
+
+# Anthropic SDK
+anthropic==0.42.0
+
+# Supabase
+supabase==2.11.0
+postgrest==0.18.0
+vecs==0.4.4
+
+# Network scanning
+python-nmap==0.7.1
+
+# Graph engine
+networkx==3.4.2
+
+# Embeddings
+voyageai==0.3.2
+openai==1.58.1
+
+# PDF generation
+reportlab==4.2.5
+
+# Utilities
+python-dotenv==1.0.1
+httpx==0.28.1
+pydantic==2.10.4
+pydantic-settings==2.7.0
+
+# NVD cache
+aiosqlite==0.20.0

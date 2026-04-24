@@ -1,0 +1,34 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+
+# Temp clones during scanning
+/tempclones/
+
+# Local CVE cache
+nvd_cache.sqlite
+
+# Generated reports
+*.pdf
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Artifacts
+implementation_plan.md
+task.md
+walkthrough.md

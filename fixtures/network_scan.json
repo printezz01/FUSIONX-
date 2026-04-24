@@ -1,0 +1,82 @@
+[
+  {
+    "title": "PostgreSQL 5432 Open — No Firewall",
+    "layer": "network",
+    "severity": "critical",
+    "description": "Port 5432 (PostgreSQL) is open and accessible without firewall restrictions. An attacker with valid database credentials and internal network access can connect directly to the database, enabling full data exfiltration and lateral movement to other internal services.",
+    "cve_id": null,
+    "gives": "full_database_access, lateral_movement",
+    "requires": "database_credentials, internal_network_access",
+    "raw_output": {
+      "port": 5432,
+      "state": "open",
+      "service": "postgresql",
+      "version": "PostgreSQL 8.3.1",
+      "protocol": "tcp"
+    }
+  },
+  {
+    "title": "SSH Service on Port 22 — Weak Configuration",
+    "layer": "network",
+    "severity": "high",
+    "description": "OpenSSH 4.7p1 is running with outdated configuration. Supports weak ciphers and allows password-based authentication. Vulnerable to brute-force attacks.",
+    "cve_id": "CVE-2008-5161",
+    "gives": "ssh_access, command_execution",
+    "requires": "ssh_credentials, internal_network_access",
+    "raw_output": {
+      "port": 22,
+      "state": "open",
+      "service": "ssh",
+      "version": "OpenSSH 4.7p1 Debian 8ubuntu1",
+      "protocol": "tcp"
+    }
+  },
+  {
+    "title": "FTP Service on Port 21 — Anonymous Access",
+    "layer": "network",
+    "severity": "high",
+    "description": "vsftpd 2.3.4 is running with anonymous FTP access enabled. This version contains a known backdoor vulnerability.",
+    "cve_id": "CVE-2011-2523",
+    "gives": "file_read_access, code_read_access",
+    "requires": "internal_network_access",
+    "raw_output": {
+      "port": 21,
+      "state": "open",
+      "service": "ftp",
+      "version": "vsftpd 2.3.4",
+      "protocol": "tcp"
+    }
+  },
+  {
+    "title": "Telnet Service on Port 23 — Unencrypted",
+    "layer": "network",
+    "severity": "medium",
+    "description": "Telnet service is running on port 23. All communications are transmitted in plaintext, allowing credential interception via network sniffing.",
+    "cve_id": null,
+    "gives": "credential_interception",
+    "requires": "internal_network_access",
+    "raw_output": {
+      "port": 23,
+      "state": "open",
+      "service": "telnet",
+      "version": "Linux telnetd",
+      "protocol": "tcp"
+    }
+  },
+  {
+    "title": "MySQL on Port 3306 — Open Access",
+    "layer": "network",
+    "severity": "high",
+    "description": "MySQL 5.0.51a is accessible on port 3306. Combined with database credentials, this allows full database access.",
+    "cve_id": null,
+    "gives": "database_access",
+    "requires": "database_credentials, internal_network_access",
+    "raw_output": {
+      "port": 3306,
+      "state": "open",
+      "service": "mysql",
+      "version": "MySQL 5.0.51a-3ubuntu5",
+      "protocol": "tcp"
+    }
+  }
+]

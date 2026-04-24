@@ -1,0 +1,82 @@
+[
+  {
+    "title": "SQL Injection on /search Endpoint",
+    "layer": "web",
+    "severity": "critical",
+    "description": "The /search endpoint is vulnerable to SQL injection. User-supplied input is directly concatenated into SQL queries without sanitization, allowing an attacker to extract data, bypass authentication, and potentially gain internal network access through database features like xp_cmdshell or COPY TO PROGRAM.",
+    "cve_id": null,
+    "gives": "internal_network_access, app_data_read",
+    "requires": "internet_access",
+    "raw_output": {
+      "tool": "nikto",
+      "id": "OSVDB-0001",
+      "method": "GET",
+      "uri": "/search?q=1%27+OR+1%3D1--",
+      "description": "SQL injection via search parameter"
+    }
+  },
+  {
+    "title": "Cross-Site Scripting (XSS) — Reflected",
+    "layer": "web",
+    "severity": "high",
+    "description": "Multiple parameters reflect user input without encoding. An attacker can inject malicious JavaScript that executes in victim's browser sessions.",
+    "cve_id": null,
+    "gives": "session_hijack, credential_theft",
+    "requires": "internet_access",
+    "raw_output": {
+      "tool": "nikto",
+      "id": "OSVDB-3092",
+      "method": "GET",
+      "uri": "/vulnerabilities/xss_r/?name=<script>alert(1)</script>",
+      "description": "Reflected XSS in name parameter"
+    }
+  },
+  {
+    "title": "Directory Listing Enabled",
+    "layer": "web",
+    "severity": "medium",
+    "description": "Apache directory listing is enabled, exposing internal file structure, configuration files, and potentially sensitive data to unauthenticated users.",
+    "cve_id": null,
+    "gives": "information_disclosure",
+    "requires": "internet_access",
+    "raw_output": {
+      "tool": "nikto",
+      "id": "OSVDB-3268",
+      "method": "GET",
+      "uri": "/config/",
+      "description": "Directory indexing found"
+    }
+  },
+  {
+    "title": "Server Version Disclosure",
+    "layer": "web",
+    "severity": "low",
+    "description": "The web server exposes its version in HTTP response headers (Apache/2.4.7 on Ubuntu). This helps attackers identify known vulnerabilities for the specific version.",
+    "cve_id": null,
+    "gives": "information_disclosure",
+    "requires": "internet_access",
+    "raw_output": {
+      "tool": "nikto",
+      "id": "OSVDB-0000",
+      "method": "HEAD",
+      "uri": "/",
+      "description": "Server: Apache/2.4.7 (Ubuntu)"
+    }
+  },
+  {
+    "title": "Missing Security Headers",
+    "layer": "web",
+    "severity": "low",
+    "description": "Several security headers are missing: X-Frame-Options, X-Content-Type-Options, Content-Security-Policy. This makes the application susceptible to clickjacking and MIME-type attacks.",
+    "cve_id": null,
+    "gives": "information_disclosure",
+    "requires": "internet_access",
+    "raw_output": {
+      "tool": "nikto",
+      "id": "OSVDB-0000",
+      "method": "HEAD",
+      "uri": "/",
+      "description": "Missing security headers"
+    }
+  }
+]

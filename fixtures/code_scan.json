@@ -1,0 +1,91 @@
+[
+  {
+    "title": "Hardcoded Database Password in config.py",
+    "layer": "code",
+    "severity": "critical",
+    "description": "A hardcoded database password was found in config.py. The credential 'postgres:password123@localhost:5432/appdb' is embedded directly in source code, granting anyone with code read access full database credentials.",
+    "cve_id": null,
+    "gives": "database_credentials",
+    "requires": "code_read_access",
+    "raw_output": {
+      "tool": "bandit",
+      "test_id": "B105",
+      "test_name": "hardcoded_password_string",
+      "filename": "config.py",
+      "line_number": 12,
+      "severity": "HIGH",
+      "confidence": "MEDIUM",
+      "code": "DB_PASSWORD = 'password123'"
+    }
+  },
+  {
+    "title": "SQL Injection via String Formatting",
+    "layer": "code",
+    "severity": "critical",
+    "description": "SQL query constructed using string formatting instead of parameterized queries. This allows SQL injection attacks that can read, modify, or delete database contents.",
+    "cve_id": null,
+    "gives": "app_data_read, app_data_write",
+    "requires": "internet_access",
+    "raw_output": {
+      "tool": "bandit",
+      "test_id": "B608",
+      "test_name": "hardcoded_sql_expressions",
+      "filename": "app/models.py",
+      "line_number": 45,
+      "severity": "MEDIUM",
+      "confidence": "LOW",
+      "code": "query = \"SELECT * FROM users WHERE id = %s\" % user_id"
+    }
+  },
+  {
+    "title": "Insecure Use of eval()",
+    "layer": "code",
+    "severity": "high",
+    "description": "Use of eval() function detected. An attacker who can control the input to eval() can execute arbitrary Python code on the server.",
+    "cve_id": null,
+    "gives": "command_execution",
+    "requires": "app_data_write",
+    "raw_output": {
+      "tool": "semgrep",
+      "rule_id": "python.lang.security.audit.eval-detected",
+      "filename": "app/utils.py",
+      "line_number": 23,
+      "severity": "WARNING"
+    }
+  },
+  {
+    "title": "Debug Mode Enabled in Production",
+    "layer": "code",
+    "severity": "medium",
+    "description": "Flask/Django debug mode is enabled in the configuration. This exposes detailed error pages with stack traces, environment variables, and source code to end users.",
+    "cve_id": null,
+    "gives": "information_disclosure",
+    "requires": "internet_access",
+    "raw_output": {
+      "tool": "semgrep",
+      "rule_id": "python.flask.security.audit.debug-enabled",
+      "filename": "app/__init__.py",
+      "line_number": 8,
+      "severity": "WARNING"
+    }
+  },
+  {
+    "title": "Weak Cryptographic Hash (MD5)",
+    "layer": "code",
+    "severity": "medium",
+    "description": "MD5 is used for hashing passwords. MD5 is cryptographically broken and should not be used for security-sensitive operations.",
+    "cve_id": null,
+    "gives": "credential_cracking",
+    "requires": "database_access",
+    "raw_output": {
+      "tool": "bandit",
+      "test_id": "B303",
+      "test_name": "blacklist_calls",
+      "filename": "app/auth.py",
+      "line_number": 31,
+      "severity": "HIGH",
+      "confidence": "HIGH",
+      "code": "hashlib.md5(password.encode()).hexdigest()"
+    }
+  }
+]

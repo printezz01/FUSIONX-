@@ -1,0 +1,32 @@
+# ═══════════════════════════════════════════════════
+# Sentinel AI — Docker Compose (Demo Targets)
+# ═══════════════════════════════════════════════════
+version: "3.9"
+
+services:
+  # DVWA — Damn Vulnerable Web Application
+  dvwa:
+    image: vulnerables/web-dvwa
+    container_name: sentinel-dvwa
+    ports:
+      - "4280:80"
+    restart: unless-stopped
+
+  # Metasploitable — Vulnerable Linux target
+  metasploitable:
+    image: tleemcjr/metasploitable2
+    container_name: sentinel-metasploitable
+    ports:
+      - "4222:22"    # SSH
+      - "4280:80"    # HTTP (remapped if dvwa occupies 4280)
+      - "5432:5432"  # PostgreSQL
+      - "3306:3306"  # MySQL
+    restart: unless-stopped
+
+  # Camera Simulator (placeholder — uses fixture fallback)
+  camera-sim:
+    image: alpine:3.19
+    container_name: sentinel-camera-sim
+    command: >
+      sh -c "echo 'Camera simulator placeholder — Sentinel uses fixture fallback for CCTV scans' && sleep infinity"
+    restart: unless-stopped

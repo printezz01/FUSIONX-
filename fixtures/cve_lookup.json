@@ -1,0 +1,47 @@
+{
+  "postgresql_8.3": [
+    {
+      "cve_id": "CVE-2009-3229",
+      "cvss_score": 4.0,
+      "description": "PostgreSQL 8.3.x before 8.3.8 allows remote authenticated users to cause a denial of service via a column with a large precision in a GROUP BY clause."
+    },
+    {
+      "cve_id": "CVE-2010-1169",
+      "cvss_score": 8.5,
+      "description": "PostgreSQL 8.3.x before 8.3.11 does not properly restrict PL/perl procedures, which allows remote authenticated users to execute arbitrary Perl code."
+    }
+  ],
+  "openssh_4.7": [
+    {
+      "cve_id": "CVE-2008-5161",
+      "cvss_score": 2.6,
+      "description": "OpenSSH 4.7p1 and earlier, when CBC mode is enabled, allows man-in-the-middle attacks to recover plaintext data."
+    }
+  ],
+  "vsftpd_2.3.4": [
+    {
+      "cve_id": "CVE-2011-2523",
+      "cvss_score": 10.0,
+      "description": "vsftpd 2.3.4 contains a backdoor that opens a shell on port 6200 when a username containing :) is used."
+    }
+  ],
+  "apache_2.4.7": [
+    {
+      "cve_id": "CVE-2014-0226",
+      "cvss_score": 6.8,
+      "description": "Race condition in the mod_status module in Apache HTTP Server allows remote attackers to cause heap-based buffer overflow."
+    },
+    {
+      "cve_id": "CVE-2017-15715",
+      "cvss_score": 8.1,
+      "description": "Apache httpd 2.4.0 to 2.4.29 can be tricked into interpreting malicious filenames as file uploads."
+    }
+  ],
+  "mysql_5.0": [
+    {
+      "cve_id": "CVE-2008-0226",
+      "cvss_score": 7.5,
+      "description": "MySQL 5.0 allows remote attackers to execute arbitrary code via a crafted password packet during authentication."
+    }
+  ]
+}

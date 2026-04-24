@@ -1,0 +1,39 @@
+[
+  {
+    "title": "Hikvision IP Camera — Remote Code Execution",
+    "layer": "iot",
+    "severity": "critical",
+    "description": "Hikvision camera detected with firmware vulnerable to CVE-2021-36260 (CVSS 9.8). A command injection vulnerability in the web server allows unauthenticated remote code execution. An attacker can gain full control of the camera, access video feeds, and use the device as a pivot point for lateral movement.",
+    "cve_id": "CVE-2021-36260",
+    "gives": "camera_access, command_execution, lateral_movement",
+    "requires": "internal_network_access",
+    "raw_output": {
+      "tool": "cctv_scanner",
+      "ip": "192.168.1.100",
+      "port": 80,
+      "fingerprint": "Hikvision",
+      "model": "DS-2CD2xx2",
+      "firmware": "V5.5.800 build 210628",
+      "http_banner": "App-webs/200.0.0.5 (Hikvision)",
+      "cve": "CVE-2021-36260",
+      "cvss": 9.8
+    }
+  },
+  {
+    "title": "Default Credentials on IP Camera",
+    "layer": "iot",
+    "severity": "high",
+    "description": "The Hikvision camera is accessible with default credentials (admin/12345). Default passwords allow unauthorized access to camera management, video feeds, and configuration changes.",
+    "cve_id": null,
+    "gives": "camera_access, credential_theft",
+    "requires": "internal_network_access",
+    "raw_output": {
+      "tool": "cctv_scanner",
+      "ip": "192.168.1.100",
+      "port": 80,
+      "default_creds": true,
+      "username": "admin",
+      "password_redacted": "1234****"
+    }
+  }
+]

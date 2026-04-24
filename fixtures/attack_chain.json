@@ -1,0 +1,50 @@
+{
+  "nodes": [
+    {
+      "data": {
+        "id": "step-1-sqli",
+        "label": "SQL Injection on /search",
+        "severity": "critical",
+        "layer": "web",
+        "gives": "internal_network_access, app_data_read",
+        "requires": "internet_access"
+      }
+    },
+    {
+      "data": {
+        "id": "step-2-hardcoded-pw",
+        "label": "Hardcoded Database Password in config.py",
+        "severity": "critical",
+        "layer": "code",
+        "gives": "database_credentials",
+        "requires": "code_read_access"
+      }
+    },
+    {
+      "data": {
+        "id": "step-3-open-pg",
+        "label": "PostgreSQL 5432 Open — No Firewall",
+        "severity": "critical",
+        "layer": "network",
+        "gives": "full_database_access, lateral_movement",
+        "requires": "database_credentials, internal_network_access"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "data": {
+        "source": "step-1-sqli",
+        "target": "step-3-open-pg",
+        "reason": "SQL injection provides internal_network_access needed to reach the exposed PostgreSQL port"
+      }
+    },
+    {
+      "data": {
+        "source": "step-2-hardcoded-pw",
+        "target": "step-3-open-pg",
+        "reason": "Hardcoded password provides database_credentials needed to authenticate to the open PostgreSQL service"
+      }
+    }
+  ]
+}
