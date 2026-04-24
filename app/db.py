@@ -109,10 +109,22 @@ def get_scan_session(scan_id: str) -> Optional[dict]:
 def insert_finding(finding: dict) -> dict:
     if "id" not in finding:
         finding["id"] = new_uuid()
+        
+    # Generate vector embedding for semantic search
+    if "embedding" not in finding:
+        try:
+            from app.engine import _embed_text
+            text = f"{finding.get('title', '')} {finding.get('description', '')}"
+            emb = _embed_text(text)
+            if emb:
+                finding["embedding"] = emb
+        except Exception as e:
+            logger.warning(f"Could not generate embedding for finding: {e}")
+
     if USE_SUPABASE:
         try:
             sb = get_supabase()
-            finding_data = {k: v for k, v in finding.items() if k != "embedding"}
+            finding_data = {k: v for k, v in finding.items()}
             result = sb.table("findings").insert(finding_data).execute()
             return result.data[0] if result.data else finding
         except Exception as e:

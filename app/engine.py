@@ -264,7 +264,11 @@ def _embed_text(text: str) -> Optional[list[float]]:
             import voyageai
             client = voyageai.Client(api_key=VOYAGE_API_KEY)
             result = client.embed([text], model="voyage-2")
-            return result.embeddings[0]
+            vec = result.embeddings[0]
+            # Pad to 1536 to match Supabase pgvector schema
+            if len(vec) < 1536:
+                vec.extend([0.0] * (1536 - len(vec)))
+            return vec
         except Exception as e:
             logger.warning(f"Voyage AI embedding failed: {e}")
 
