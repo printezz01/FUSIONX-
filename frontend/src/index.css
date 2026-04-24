@@ -334,25 +334,33 @@ body {
 /* ── Input ────────────────────────────────────── */
 
 .search-input {
-  background: rgba(244, 242, 234, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 14px;
-  padding: 14px 20px 14px 44px;
-  font-size: 15px;
+  background: rgba(255, 255, 252, 0.9);
+  border: 2px solid rgba(122, 140, 94, 0.3);
+  border-radius: 16px;
+  padding: 16px 20px 16px 48px;
+  font-size: 16px;
   font-family: var(--font-mono);
   color: #2a2e24;
   width: 100%;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  animation: input-attention 2s ease-out;
+}
+
+@keyframes input-attention {
+  0% { box-shadow: 0 0 0 0 rgba(122, 140, 94, 0.4); }
+  30% { box-shadow: 0 0 0 6px rgba(122, 140, 94, 0.15); }
+  100% { box-shadow: none; }
 }
 
 .search-input::placeholder {
   color: #8a8e7c;
+  font-size: 14px;
 }
 
 .search-input:focus {
   outline: none;
   border-color: var(--color-sentinel-accent);
-  box-shadow: 0 0 0 3px rgba(122, 140, 94, 0.15);
+  box-shadow: 0 0 0 4px rgba(122, 140, 94, 0.15);
 }
 
 /* ── Quick target chips ───────────────────────── */

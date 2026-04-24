@@ -3,7 +3,7 @@
 // "Scan anything. Sentinel will figure out what it is."
 // ═══════════════════════════════════════════════════
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ArrowRight, Download } from 'lucide-react';
 import { startScan, downloadReport } from '../api/client';
@@ -38,6 +38,12 @@ export default function HomePage() {
   const [target, setTarget] = useState('');
   const [scanning, setScanning] = useState(false);
   const [lastScanId, setLastScanId] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus the scan input on mount
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   const detectedType = target ? detectTargetType(target) : null;
 
@@ -108,13 +114,15 @@ export default function HomePage() {
         <div className="flex-1 relative">
           <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8a8e7c]" />
           <input
+            ref={inputRef}
             type="text"
             value={target}
             onChange={(e) => setTarget(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleScan()}
-            placeholder="10.42.1.12  ·  https://app.acme.com  ·  github.com/acme/api  ·  rtsp://cam-lobby-07"
-            className="search-input"
+            placeholder="Type or paste a target here…  e.g. 127.0.0.1  ·  github.com/OWASP/PyGoat"
+            className="search-input text-base py-4"
             id="scan-target-input"
+            autoFocus
           />
         </div>
 

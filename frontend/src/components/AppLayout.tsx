@@ -129,15 +129,21 @@ export default function AppLayout() {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Bar */}
         <div className="topbar flex items-center gap-4 m-3 mb-0 px-5 py-3">
-          <div className="flex items-center gap-2 flex-1">
+          <div
+            className="flex items-center gap-2 flex-1 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => {
+              if (location.pathname !== '/') {
+                window.location.href = '/';
+              } else {
+                document.getElementById('scan-target-input')?.focus();
+              }
+            }}
+          >
             <Search size={16} className="text-sentinel-text-dim" />
-            <input
-              type="text"
-              placeholder="Scan an IP, URL, repo, or camera..."
-              className="bg-transparent border-none outline-none text-sm flex-1 text-[#2a2e24] placeholder:text-sentinel-text-dim font-mono text-[13px]"
-              readOnly
-            />
-            <ArrowRight size={14} className="text-sentinel-text-dim" />
+            <span className="text-sm text-sentinel-text-dim font-mono text-[13px]">
+              Scan an IP, URL, repo, or camera...
+            </span>
+            <ArrowRight size={14} className="text-sentinel-text-dim ml-auto" />
           </div>
 
           <div className="flex items-center gap-5">
