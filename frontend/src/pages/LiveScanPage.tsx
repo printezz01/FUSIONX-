@@ -106,10 +106,21 @@ export default function LiveScanPage() {
     }
   }, [status?.status]);
 
-  const minutes = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0');
-  const seconds = (elapsedSeconds % 60).toString().padStart(2, '0');
+
   const isComplete = status?.status === 'completed';
   const isFailed = status?.status === 'failed';
+
+  useEffect(() => {
+    if (isComplete || isFailed) return;
+    const interval = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - startTime.current) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isComplete, isFailed]);
+
+  const elapsed = status?.elapsed_seconds ?? elapsedSeconds;
+  const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+  const seconds = (elapsed % 60).toString().padStart(2, '0');
 
   return (
     <div className="animate-fade-in h-full flex flex-col">
