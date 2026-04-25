@@ -109,17 +109,6 @@ def get_scan_session(scan_id: str) -> Optional[dict]:
 def insert_finding(finding: dict) -> dict:
     if "id" not in finding:
         finding["id"] = new_uuid()
-        
-    # Generate vector embedding for semantic search
-    if "embedding" not in finding:
-        try:
-            from app.engine import _embed_text
-            text = f"{finding.get('title', '')} {finding.get('description', '')}"
-            emb = _embed_text(text)
-            if emb:
-                finding["embedding"] = emb
-        except Exception as e:
-            logger.warning(f"Could not generate embedding for finding: {e}")
 
     if USE_SUPABASE:
         try:
@@ -138,6 +127,26 @@ def insert_finding(finding: dict) -> dict:
 
 
 def insert_findings(findings: list[dict], scan_id: str) -> list[dict]:
+    # Extract texts for findings that need embeddings
+    texts_to_embed = []
+    findings_needing_embed = []
+    
+    for f in findings:
+        if "embedding" not in f:
+            texts_to_embed.append(f"{f.get('title', '')} {f.get('description', '')}")
+            findings_needing_embed.append(f)
+            
+    # Batch embed to avoid Voyage AI 3 RPM rate limit
+    if texts_to_embed:
+        try:
+            from app.engine import _embed_texts
+            embeddings = _embed_texts(texts_to_embed)
+            if embeddings:
+                for f, emb in zip(findings_needing_embed, embeddings):
+                    f["embedding"] = emb
+        except Exception as e:
+            logger.warning(f"Batch embedding failed: {e}")
+
     results = []
     for f in findings:
         f["scan_id"] = scan_id

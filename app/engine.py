@@ -259,16 +259,27 @@ def map_owasp_findings(scan_id: str) -> dict:
 
 def _embed_text(text: str) -> Optional[list[float]]:
     """Generate embedding using Voyage AI (primary) or OpenAI (fallback)."""
+    res = _embed_texts([text])
+    return res[0] if res else None
+
+def _embed_texts(texts: list[str]) -> Optional[list[list[float]]]:
+    """Generate embeddings in batch to avoid Voyage AI free tier rate limits (3 RPM)."""
+    if not texts:
+        return []
     if VOYAGE_API_KEY:
         try:
             import voyageai
             client = voyageai.Client(api_key=VOYAGE_API_KEY)
-            result = client.embed([text], model="voyage-2")
-            vec = result.embeddings[0]
-            # Pad to 1536 to match Supabase pgvector schema
-            if len(vec) < 1536:
-                vec.extend([0.0] * (1536 - len(vec)))
-            return vec
+            # Voyage AI handles batching automatically when passing a list
+            result = client.embed(texts, model="voyage-2")
+            
+            padded_vecs = []
+            for vec in result.embeddings:
+                # Pad to 1536 to match Supabase pgvector schema
+                if len(vec) < 1536:
+                    vec.extend([0.0] * (1536 - len(vec)))
+                padded_vecs.append(vec)
+            return padded_vecs
         except Exception as e:
             logger.warning(f"Voyage AI embedding failed: {e}")
 
